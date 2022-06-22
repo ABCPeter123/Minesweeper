@@ -22,6 +22,7 @@ exit_image = pygame.image.load("exit.png")
 easy_grid_image = pygame.image.load("grid_80_80.png")
 medium_grid_image = pygame.image.load("Grid_50_50.png")
 hard_grid_image = pygame.image.load("grid_35_35.png")
+leave_image = pygame.image.load("leave.png")
 
 #title class
 class title:
@@ -41,7 +42,7 @@ class title:
 
 #button class
 class button:
-    def __init__(self, pos, image, scale = 1, work = True):
+    def __init__(self, pos, image, scale = 1, work = True, action = False):
         width = image.get_width()
         height = image.get_height()
         self.pos = pos
@@ -50,24 +51,30 @@ class button:
         self.rect.center = pos
         self.clicked = False
         self.work = work
+        self.action = action
 
     def draw(self):
-        action = False
         #detecting whether mouse clicked or not
         mouse_pos = pygame.mouse.get_pos()
         if self.rect.collidepoint(mouse_pos):
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
                 self.clicked = True
-                action = True
+                self.action = True
 
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
+
         screen.blit(self.image, self.rect)
 
-        return action
+        return self.action
         
     def disappear(self):
         pygame.draw.rect(screen, "#D3D3D3", self.rect)
+        self.work = False
+        self.action = False
+
+    def make_work(self):
+        self.work = True
         
 #grid class
 class grid:
@@ -103,6 +110,12 @@ exit = button(
     (600, 750),
     exit_image,
     6
+)
+
+leave = button(
+    (600, 850),
+    leave_image,
+    4
 )
 
 #title instances
@@ -142,7 +155,7 @@ n = 0
 while i < 300:
     while n <= 19:
         if i % 20 == n:
-            globals()[f"medium_grid_{i}"] = grid(medium_grid_image, (50 * (n + 2) + 25, 50 * (globals()[f"y{n}"] + 1)))
+            globals()[f"medium_grid_{i}"] = grid(medium_grid_image, (50 * (n + 2) + 25, 50 * (globals()[f"y{n}"] + 1)-50))
             globals()[f"y{n}"] += 1
         n += 1
     if n == 20:
@@ -158,7 +171,7 @@ n = 0
 while i < 588:
     while n <= 27:
         if i % 28 == n:
-            globals()[f"hard_grid_{i}"] = grid(hard_grid_image, (35 * (n + 2) + 75, 35 * (globals()[f"y{n}"] + 1)))
+            globals()[f"hard_grid_{i}"] = grid(hard_grid_image, (35 * (n + 2) + 57.5, 35 * (globals()[f"y{n}"] + 1)))
             globals()[f"y{n}"] += 1
         n += 1
     if n == 28:
@@ -167,7 +180,6 @@ while i < 588:
 
 
 loop = True
-in_game = False
 
 #game loop
 while loop == True:
@@ -175,71 +187,122 @@ while loop == True:
     screen.fill("#D3D3D3")
     main_title.show()
     title2.show()
+
     if easy_button.draw() and easy_button.work == True:
         #still under construction
-        medium_button.work = False
-        hard_button.work = False
-        exit.work = False
-        in_game = True
-
-        main_title.disappear()
-        title2.disappear()
-        easy_button.disappear()
-
-        i = 0
-        while i < 108:
-            globals()[f"easy_grid_{i}"].draw()
-            i += 1
-
-        pygame.display.update()
-            
-    if medium_button.draw() and medium_button.work == True:
-        #still under construction
-        easy_button.work = False
-        hard_button.work = False
-        exit.work = False
-        in_game = True
-
-        main_title.disappear()
-        title2.disappear()
-        easy_button.disappear()
-        medium_button.disappear()
-        
-        i = 0
-        while i < 300:
-            globals()[f"medium_grid_{i}"].draw()
-            i += 1
-        
-        pygame.display.update()
-    if hard_button.draw() and hard_button.work == True:
-        #still under construction
-
-        medium_button.work = False
-        easy_button.work = False
-        exit.work = False
-        in_game = True
 
         main_title.disappear()
         title2.disappear()
         easy_button.disappear()
         medium_button.disappear()
         hard_button.disappear()
-        
-        i = 0
-        while i < 588:
-            globals()[f"hard_grid_{i}"].draw()
-            i += 1
+        exit.disappear()
 
+        easy_loop = True
+        while easy_loop == True:
+
+            i = 0
+            while i < 108:
+                globals()[f"easy_grid_{i}"].draw()
+                i += 1
+
+            if leave.draw():
+                easy_loop = False
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            pygame.display.update()
+
+        leave.disappear()
+
+        easy_button.make_work()
+        medium_button.make_work()
+        hard_button.make_work()
+        exit.make_work()
+            
+        pygame.display.update()
+    if medium_button.draw() and medium_button.work == True:
+        #still under construction
+
+        main_title.disappear()
+        title2.disappear()
+        easy_button.disappear()
+        medium_button.disappear()
+        hard_button.disappear()
+        exit.disappear()
+
+        medium_loop = True
+        while medium_loop == True:
+
+            i = 0
+            while i < 300:
+                globals()[f"medium_grid_{i}"].draw()
+                i += 1
+
+            if leave.draw():
+                medium_loop = False
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            pygame.display.update()
+
+        leave.disappear()
+
+        easy_button.make_work()
+        medium_button.make_work()
+        hard_button.make_work()
+        exit.make_work()
+
+        pygame.display.update()
+    if hard_button.draw() and hard_button.work == True:
+        #still under construction
+
+        main_title.disappear()
+        title2.disappear()
+        easy_button.disappear()
+        medium_button.disappear()
+        hard_button.disappear()
+        exit.disappear()
+
+        hard_loop = True
+        while hard_loop == True:
+
+            i = 0
+            while i < 588:
+                globals()[f"hard_grid_{i}"].draw()
+                i += 1
+
+            if leave.draw():
+                hard_loop = False
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+
+            pygame.display.update()
+
+        leave.disappear()
+
+        easy_button.make_work()
+        medium_button.make_work()
+        hard_button.make_work()
+        exit.make_work()
+        
         pygame.display.update()
     
     if exit.draw() and exit.work == True:
         loop = False
         pygame.quit()
 
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+
     clock.tick(30)
-    if in_game == False:
-        pygame.display.update()
+
+    pygame.display.update()
+        
