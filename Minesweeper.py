@@ -1,3 +1,4 @@
+from math import floor
 import pygame
 
 
@@ -23,6 +24,9 @@ easy_grid_image = pygame.image.load("grid_80_80.png")
 medium_grid_image = pygame.image.load("Grid_50_50.png")
 hard_grid_image = pygame.image.load("grid_35_35.png")
 leave_image = pygame.image.load("leave.png")
+easy_grid_0_image = pygame.image.load("0_grid_80_80.png")
+medium_grid_0_image = pygame.image.load("0_grid_50_50.png")
+hard_grid_0_image = pygame.image.load("0_grid_35_35.png")
 
 #title class
 class title:
@@ -78,14 +82,22 @@ class button:
         
 #grid class
 class grid:
-    def __init__(self, image, pos):
+    def __init__(self, image, pos, status = 'none'):
         self.image = image
         self.pos = pos
         self.rect = self.image.get_rect()
         self.rect.center = pos
+        self.status = status
     
     def draw(self):
         screen.blit(self.image, self.rect)
+
+    def disappear(self):
+        pygame.draw.rect(screen, "#D3D3D3", self.rect)
+
+    def change(self, image):
+        pygame.draw.rect(screen, "#D3D3D3", self.rect)
+        screen.blit(image, self.rect)
 
 #button instances
 easy_button = button(
@@ -189,8 +201,7 @@ while loop == True:
     title2.show()
 
     if easy_button.draw() and easy_button.work == True:
-        #still under construction
-
+        #main menu disappear
         main_title.disappear()
         title2.disappear()
         easy_button.disappear()
@@ -198,14 +209,42 @@ while loop == True:
         hard_button.disappear()
         exit.disappear()
 
+        #display the grids
+        i = 0
+        while i < 108:
+            globals()[f"easy_grid_{i}"].draw() 
+            i += 1
+
+        clicked = 0
+        action = False
+
+        #game loop for game play
         easy_loop = True
         while easy_loop == True:
+            
+            #calculating which box player is pressing
+            x,y = pygame.mouse.get_pos()
+            if pygame.mouse.get_pressed()[0] == 1 and clicked == 1:
+                if 120 <= x <= 1080 and 40 <= y <= 760:
+                    n = floor(x / 80 - 0.5) - 1 + floor(y / 80 - 0.5) * 12
+                else:
+                    n = -1
+                clicked += 1
+                action = True
+            
+            if pygame.mouse.get_pressed()[0] == 0:
+                clicked = 1
 
-            i = 0
-            while i < 108:
-                globals()[f"easy_grid_{i}"].draw()
-                i += 1
+            #action 
+            if action == True:
+                if 0 <= n <= 107:
+                    globals()[f'easy_grid_{n}'].change(easy_grid_0_image)
+                else:
+                    pass
 
+            action = False
+
+            #leave
             if leave.draw():
                 easy_loop = False
             
@@ -215,8 +254,15 @@ while loop == True:
 
             pygame.display.update()
 
+        #make the game disappear and goes back to the main menu
+        i = 0
+        while i < 108:
+            globals()[f"easy_grid_{i}"].disappear()
+            i += 1
+
         leave.disappear()
 
+        #make the main menu buttons work again
         easy_button.make_work()
         medium_button.make_work()
         hard_button.make_work()
@@ -224,8 +270,7 @@ while loop == True:
             
         pygame.display.update()
     if medium_button.draw() and medium_button.work == True:
-        #still under construction
-
+        #main menu disappear
         main_title.disappear()
         title2.disappear()
         easy_button.disappear()
@@ -233,14 +278,42 @@ while loop == True:
         hard_button.disappear()
         exit.disappear()
 
+        #display the grids
+        i = 0
+        while i < 300:
+            globals()[f"medium_grid_{i}"].draw() 
+            i += 1
+
+        clicked = 0
+        action = False
+
+        #game loop for game play
         medium_loop = True
         while medium_loop == True:
+            
+            #calculating which box player is pressing
+            x,y = pygame.mouse.get_pos()
+            if pygame.mouse.get_pressed()[0] == 1 and clicked == 1:
+                if 100 <= x <= 1100 and 25 <= y <= 775:
+                    n = floor(x / 50) - 2 + floor(y / 50 - 0.5) * 20
+                else:
+                    n = -1
+                clicked += 1
+                action = True
+            
+            if pygame.mouse.get_pressed()[0] == 0:
+                clicked = 1
 
-            i = 0
-            while i < 300:
-                globals()[f"medium_grid_{i}"].draw()
-                i += 1
+            #action 
+            if action == True:
+                if 0 <= n <= 299:
+                    globals()[f'medium_grid_{n}'].change(medium_grid_0_image)
+                else:
+                    pass
 
+            action = False
+
+            #leave
             if leave.draw():
                 medium_loop = False
             
@@ -250,17 +323,23 @@ while loop == True:
 
             pygame.display.update()
 
+        #make the game disappear and goes back to the main menu
+        i = 0
+        while i < 300:
+            globals()[f"medium_grid_{i}"].disappear()
+            i += 1
+
         leave.disappear()
 
+        #make the main menu buttons work again
         easy_button.make_work()
         medium_button.make_work()
         hard_button.make_work()
-        exit.make_work()
-
+        exit.make_work() 
+            
         pygame.display.update()
     if hard_button.draw() and hard_button.work == True:
-        #still under construction
-
+        #main menu disappear
         main_title.disappear()
         title2.disappear()
         easy_button.disappear()
@@ -268,14 +347,42 @@ while loop == True:
         hard_button.disappear()
         exit.disappear()
 
+        #display the grids
+        i = 0
+        while i < 588:
+            globals()[f"hard_grid_{i}"].draw() 
+            i += 1
+
+        clicked = 0
+        action = False
+
+        #game loop for game play
         hard_loop = True
         while hard_loop == True:
+            
+            #calculating which box player is pressing
+            x,y = pygame.mouse.get_pos()
+            if pygame.mouse.get_pressed()[0] == 1 and clicked == 1:
+                if 110 <= x <= 1090 and 52.5 <= y <= 787.5:
+                    n = floor(x / 35 - 1/7) - 3 + (floor(y / 35 - 0.5) - 1) * 28
+                else:
+                    n = -1
+                clicked += 1
+                action = True
+            
+            if pygame.mouse.get_pressed()[0] == 0:
+                clicked = 1
 
-            i = 0
-            while i < 588:
-                globals()[f"hard_grid_{i}"].draw()
-                i += 1
+            #action 
+            if action == True:
+                if 0 <= n <= 587:
+                    globals()[f'hard_grid_{n}'].change(hard_grid_0_image)
+                else:
+                    pass
 
+            action = False
+
+            #leave
             if leave.draw():
                 hard_loop = False
             
@@ -285,13 +392,20 @@ while loop == True:
 
             pygame.display.update()
 
+        #make the game disappear and goes back to the main menu
+        i = 0
+        while i < 588:
+            globals()[f"hard_grid_{i}"].disappear()
+            i += 1
+
         leave.disappear()
 
+        #make the main menu buttons work again
         easy_button.make_work()
         medium_button.make_work()
         hard_button.make_work()
-        exit.make_work()
-        
+        exit.make_work() 
+            
         pygame.display.update()
     
     if exit.draw() and exit.work == True:
