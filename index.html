@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minesweeper</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#d3d3d3}
+  body{display:grid;place-items:center;min-height:100dvh;overflow:hidden}
+  canvas{display:block;width:min(100vw,133.333333dvh);height:auto;max-height:100dvh;aspect-ratio:4/3;image-rendering:pixelated;touch-action:manipulation}
+</style>
+</head>
+<body>
+<canvas id="game" width="1200" height="900" aria-label="Minesweeper game"></canvas>
+<script>
+"use strict";
+// Browser entry point for the original Pygame game. All graphics come from Sources/.
+const assetNames=["title.png","title2.png","easy_button.png","medium_button.png","hard_button.png","exit.png","grid_80_80.png","Grid_50_50.png","grid_35_35.png","leave.png","0_grid_80_80.png","0_grid_50_50.png","0_grid_35_35.png","mine_grid_80_80.png","mine_grid_50_50.png","mine_grid_35_35.png","1_grid_80_80.png","2_grid_80_80.png","3_grid_80_80.png","4_grid_80_80.png","5_grid_80_80.png","6_grid_80_80.png","7_grid_80_80.png","8_grid_80_80.png","1_grid_50_50.png","2_grid_50_50.png","3_grid_50_50.png","4_grid_50_50.png","5_grid_50_50.png","6_grid_50_50.png","7_grid_50_50.png","8_grid_50_50.png","1_grid_35_35.png","2_grid_35_35.png","3_grid_35_35.png","4_grid_35_35.png","5_grid_35_35.png","6_grid_35_35.png","7_grid_35_35.png","8_grid_35_35.png","lose.png","win.png","flag_80_80.png","flag_50_50.png","flag_35_35.png"];
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+ctx.imageSmoothingEnabled=false;
+const images=Object.create(null);
+const settings={
+  easy:{cols:12,rows:9,mines:15,size:80,left:120,top:40,base:"80_80",covered:"grid_80_80.png"},
+  medium:{cols:20,rows:15,mines:50,size:50,left:100,top:25,base:"50_50",covered:"Grid_50_50.png"},
+  hard:{cols:28,rows:21,mines:150,size:35,left:110,top:52.5,base:"35_35",covered:"grid_35_35.png"}
+};
+let page="menu",mode=null,config=null,board=[],generated=false,result="";
+function sprite(file,x,y,scale=1){
+  const img=images[file];
+  if(!img||!img.complete||!img.naturalWidth)return;
+  const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+  ctx.drawImage(img,Math.round(x-w/2),Math.round(y-h/2),w,h);
+}
+function bounds(file,x,y,scale=1){
+  const img=images[file];
+  if(!img||!img.naturalWidth)return false;
+  return mouseX>=x-img.naturalWidth*scale/2&&mouseX<x+img.naturalWidth*scale/2
+      &&mouseY>=y-img.naturalHeight*scale/2&&mouseY<y+img.naturalHeight*scale/2;
+}
+let mouseX=0,mouseY=0;
+function paint(){
+  ctx.fillStyle="#d3d3d3";
+  ctx.fillRect(0,0,1200,900);
+  if(page==="menu"){
+    sprite("title.png",600,150,10);
+    sprite("title2.png",600,300,5);
+    sprite("easy_button.png",600,400,6);
+    sprite("medium_button.png",600,500,6);
+    sprite("hard_button.png",600,600,6);
+    sprite("exit.png",600,750,6);
+  }else if(page==="game"){
+    for(let i=0;i<board.length;i++){
+      const cell=board[i];
+      const col=i%config.cols,row=Math.floor(i/config.cols);
+      const cx=config.left+(col+0.5)*config.size;
+      const cy=config.top+(row+0.5)*config.size;
+      let file=config.covered;
+      if(cell.flagged && !cell.opened && result!=="lose"){
+        file="flag_"+config.base+".png";
+      }else if(cell.opened||result==="lose"){
+        const value=cell.mine?"mine":String(cell.count);
+        file=value+"_grid_"+config.base+".png";
+      }
+      sprite(file,cx,cy);
+    }
+    sprite("leave.png",600,850,4);
+    if(result==="lose")sprite("lose.png",600,400,10);
+    if(result==="win")sprite("win.png",600,400,10);
+  }
+}
+function start(difficulty){
+  mode=difficulty;config=settings[mode];
+  board=Array.from({length:config.cols*config.rows},()=>({mine:false,count:0,opened:false,flagged:false}));
+  generated=false;result="";page="game";paint();
+}
+function adjacent(index){
+  const col=index%config.cols,row=Math.floor(index/config.cols),list=[];
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    if(!dx&&!dy)continue;
+    const x=col+dx,y=row+dy;
+    if(x>=0&&x<config.cols&&y>=0&&y<config.rows)list.push(y*config.cols+x);
+  }
+  return list;
+}
+function generate(first){
+  const safe=new Set([first,...adjacent(first)]);
+  const choices=[];
+  for(let i=0;i<board.length;i++)if(!safe.has(i))choices.push(i);
+  // Partial Fisher-Yates shuffle gives uniform sampling without replacement.
+  for(let i=0;i<config.mines;i++){
+    const j=i+Math.floor(Math.random()*(choices.length-i));
+    const tmp=choices[i];choices[i]=choices[j];choices[j]=tmp;
+    board[choices[i]].mine=true;
+  }
+  for(let i=0;i<board.length;i++)
+    if(!board[i].mine)board[i].count=adjacent(i).filter(j=>board[j].mine).length;
+  generated=true;
+}
+function checkWin(){
+  if(board.every(cell=>cell.opened||(cell.flagged&&cell.mine)))result="win";
+}
+function reveal(index){
+  if(result||board[index].flagged||board[index].opened)return;
+  if(!generated)generate(index);
+  if(board[index].mine){board[index].opened=true;result="lose";return;}
+  const stack=[index];
+  while(stack.length){
+    const current=stack.pop(),cell=board[current];
+    if(cell.opened||cell.flagged)continue;
+    cell.opened=true;
+    if(cell.count===0){
+      for(const next of adjacent(current))
+        if(!board[next].opened&&!board[next].flagged&&!board[next].mine)stack.push(next);
+    }
+  }
+  checkWin();
+}
+function flag(index){
+  if(result||board[index].opened)return;
+  board[index].flagged=!board[index].flagged;
+  if(generated)checkWin();
+}
+function chord(index){
+  if(result||!board[index].opened||board[index].count===0)return;
+  const around=adjacent(index);
+  if(around.filter(i=>board[i].flagged).length!==board[index].count)return;
+  for(const next of around){if(!board[next].flagged)reveal(next);if(result==="lose")break;}
+}
+function cellAt(x,y){
+  if(x<config.left||y<config.top)return -1;
+  const c=Math.floor((x-config.left)/config.size),r=Math.floor((y-config.top)/config.size);
+  return c>=0&&c<config.cols&&r>=0&&r<config.rows?r*config.cols+c:-1;
+}
+function position(event){
+  const rect=canvas.getBoundingClientRect();
+  mouseX=(event.clientX-rect.left)*1200/rect.width;
+  mouseY=(event.clientY-rect.top)*900/rect.height;
+}
+canvas.addEventListener("contextmenu",event=>event.preventDefault());
+canvas.addEventListener("mousedown",event=>{
+  event.preventDefault();position(event);
+  if(page==="menu"){
+    if(event.button!==0)return;
+    if(bounds("easy_button.png",600,400,6))start("easy");
+    else if(bounds("medium_button.png",600,500,6))start("medium");
+    else if(bounds("hard_button.png",600,600,6))start("hard");
+    else if(bounds("exit.png",600,750,6)){page="exit";paint();}
+    return;
+  }
+  if(page!=="game")return;
+  if(event.button===0&&bounds("leave.png",600,850,4)){
+    page="menu";result="";mode=null;paint();return;
+  }
+  const index=cellAt(mouseX,mouseY);
+  if(index<0||result)return;
+  if((event.buttons&3)===3)chord(index);
+  else if(event.button===2)flag(index);
+  else if(event.button===0)reveal(index);
+  paint();
+});
+Promise.all(assetNames.map(file=>new Promise(resolve=>{
+  const img=new Image();
+  images[file]=img;
+  img.onload=resolve;img.onerror=resolve;
+  img.src="Sources/"+file;
+}))).then(paint);
+paint();
+</script>
+</body>
+</html>
